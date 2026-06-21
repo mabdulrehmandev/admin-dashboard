@@ -9,34 +9,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#0B0C14;
-    --panel:#14161F;
-    --panel2:#1B1E2B;
-    --ink:#EDEDF5;
-    --muted:#8C8DA3;
-    --violet:#8B5CF6;
-    --cyan:#3DD9D6;
-    --pink:#F26CA7;
-    --line:#262838;
+    --bg:#0B0C14; --panel:#14161F; --panel2:#1B1E2B; --ink:#EDEDF5; --muted:#8C8DA3;
+    --violet:#8B5CF6; --cyan:#3DD9D6; --pink:#F26CA7; --line:#262838;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);}
-  h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
-
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;}
   .app{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
   .sidebar{background:var(--panel);border-right:1px solid var(--line);padding:26px 18px;}
   .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:700;font-size:1.15rem;margin-bottom:30px;}
   .brand .orb{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 30% 30%, var(--cyan), var(--violet));}
   .nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;font-size:.86rem;color:var(--muted);cursor:pointer;margin-bottom:3px;}
   .nav-item.active{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(61,217,214,.1));color:var(--ink);}
-  .nav-item:hover{color:var(--ink);}
 
   main{padding:28px 34px;}
   .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;flex-wrap:wrap;gap:14px;}
   .topbar h1{font-size:1.5rem;}
   .topbar p{color:var(--muted);font-size:.85rem;margin-top:4px;}
   .range-row{display:flex;gap:6px;}
-  .range-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--line);font-size:.78rem;color:var(--muted);cursor:pointer;}
+  .range-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--line);font-size:.78rem;color:var(--muted);cursor:pointer;background:none;}
   .range-chip.active{background:var(--violet);color:#fff;border-color:var(--violet);}
 
   .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:24px;}
@@ -53,8 +44,15 @@
   .panel-head h3{font-size:1rem;}
   .legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
 
+  .panel-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .table-search{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;width:200px;}
+  .table-search input{background:none;border:none;outline:none;color:var(--ink);font-size:.82rem;width:100%;}
+  .export-btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:8px 14px;border-radius:8px;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .export-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
   table{width:100%;border-collapse:collapse;font-size:.84rem;}
-  th{text-align:left;color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.4px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.4px;padding-bottom:10px;border-bottom:1px solid var(--line);cursor:pointer;}
+  th:hover{color:var(--ink);}
   td{padding:12px 0;border-bottom:1px solid var(--line);}
   .user-cell{display:flex;align-items:center;gap:10px;}
   .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--pink));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;}
@@ -63,10 +61,8 @@
   .b-pending{background:rgba(242,108,167,.15);color:var(--pink);}
 
   @media(max-width:1000px){
-    .app{grid-template-columns:1fr;}
-    .sidebar{display:none;}
-    .stats-row{grid-template-columns:repeat(2,1fr);}
-    .grid-2{grid-template-columns:1fr;}
+    .app{grid-template-columns:1fr;} .sidebar{display:none;}
+    .stats-row{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -78,7 +74,6 @@
     <div class="nav-item">👥 Customers</div>
     <div class="nav-item">🧾 Orders</div>
     <div class="nav-item">📦 Products</div>
-    <div class="nav-item">💬 Support</div>
     <div class="nav-item">⚙ Settings</div>
   </aside>
 
@@ -86,37 +81,16 @@
     <div class="topbar">
       <div>
         <h1>Welcome back, Admin</h1>
-        <p>Here's how your store performed this period.</p>
+        <p id="periodLabel">Here's how your store performed over the last 30 days.</p>
       </div>
-      <div class="range-row">
-        <div class="range-chip">7D</div>
-        <div class="range-chip active">30D</div>
-        <div class="range-chip">90D</div>
+      <div class="range-row" id="rangeRow">
+        <button class="range-chip" data-range="7">7D</button>
+        <button class="range-chip active" data-range="30">30D</button>
+        <button class="range-chip" data-range="90">90D</button>
       </div>
     </div>
 
-    <div class="stats-row">
-      <div class="stat-card"><div class="glow" style="background:var(--violet)"></div>
-        <div class="stat-label">Total Revenue</div>
-        <div class="stat-val">$48,920</div>
-        <div class="stat-trend up">▲ 12.4% vs last period</div>
-      </div>
-      <div class="stat-card"><div class="glow" style="background:var(--cyan)"></div>
-        <div class="stat-label">New Orders</div>
-        <div class="stat-val">1,204</div>
-        <div class="stat-trend up">▲ 6.1% vs last period</div>
-      </div>
-      <div class="stat-card"><div class="glow" style="background:var(--pink)"></div>
-        <div class="stat-label">Active Customers</div>
-        <div class="stat-val">8,432</div>
-        <div class="stat-trend down">▼ 1.8% vs last period</div>
-      </div>
-      <div class="stat-card"><div class="glow" style="background:#F0A93C"></div>
-        <div class="stat-label">Conversion Rate</div>
-        <div class="stat-val">3.42%</div>
-        <div class="stat-trend up">▲ 0.4% vs last period</div>
-      </div>
-    </div>
+    <div class="stats-row" id="statsRow"></div>
 
     <div class="grid-2">
       <div class="panel">
@@ -136,9 +110,21 @@
     </div>
 
     <div class="panel">
-      <div class="panel-head"><h3>Recent Orders</h3></div>
+      <div class="panel-head-row">
+        <h3>Recent Orders</h3>
+        <div style="display:flex;gap:10px;">
+          <div class="table-search"><span>🔍</span><input type="text" id="orderSearch" placeholder="Search customer..."></div>
+          <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
       <table>
-        <thead><tr><th>Customer</th><th>Order ID</th><th>Product</th><th>Amount</th><th>Status</th></tr></thead>
+        <thead><tr>
+          <th onclick="sortBy('name')">Customer</th>
+          <th onclick="sortBy('id')">Order ID</th>
+          <th>Product</th>
+          <th onclick="sortBy('amountVal')">Amount</th>
+          <th onclick="sortBy('status')">Status</th>
+        </tr></thead>
         <tbody id="orderBody"></tbody>
       </table>
     </div>
@@ -149,53 +135,120 @@
 Chart.defaults.color = '#8C8DA3';
 Chart.defaults.font.family = "Inter";
 
-new Chart(document.getElementById('revenueChart'), {
-  type: 'line',
-  data: {
-    labels: ['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6'],
-    datasets: [
-      { label:'Revenue', data:[6200,7400,6900,8800,9200,10400], borderColor:'#8B5CF6', backgroundColor:'rgba(139,92,246,.15)', tension:.4, fill:true, pointRadius:0 },
-      { label:'Orders', data:[180,210,195,250,260,290], borderColor:'#3DD9D6', backgroundColor:'rgba(61,217,214,.1)', tension:.4, fill:true, pointRadius:0, yAxisID:'y1' }
-    ]
-  },
-  options: {
-    plugins:{ legend:{display:false} },
-    scales:{
-      x:{ grid:{display:false} },
-      y:{ grid:{color:'#1F2230'}, ticks:{ callback:v=>'$'+v/1000+'k' } },
-      y1:{ display:false, position:'right' }
-    }
-  }
+const dataByRange = {
+  7:  { labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], revenue:[1200,1450,1100,1800,2100,2600,1900], orders:[34,40,31,52,58,71,49],
+        stats:{revenue:"$12,150", revTrend:"+8.2%", orders:"335", ordTrend:"+5.4%", customers:"2,140", custTrend:"-0.6%", conv:"3.10%", convTrend:"+0.2%"} },
+  30: { labels:['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6'], revenue:[6200,7400,6900,8800,9200,10400], orders:[180,210,195,250,260,290],
+        stats:{revenue:"$48,920", revTrend:"+12.4%", orders:"1,204", ordTrend:"+6.1%", customers:"8,432", custTrend:"-1.8%", conv:"3.42%", convTrend:"+0.4%"} },
+  90: { labels:['M1','M2','M3'], revenue:[38000,44500,52000], orders:[980,1140,1320],
+        stats:{revenue:"$134,500", revTrend:"+18.9%", orders:"3,440", ordTrend:"+11.2%", customers:"21,300", custTrend:"+3.1%", conv:"3.61%", convTrend:"+0.6%"} }
+};
+
+let revenueChart, categoryChart;
+let currentRange = 30;
+
+function renderStats(range){
+  const s = dataByRange[range].stats;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="glow" style="background:var(--violet)"></div>
+      <div class="stat-label">Total Revenue</div><div class="stat-val">${s.revenue}</div>
+      <div class="stat-trend ${s.revTrend.startsWith('+')?'up':'down'}">${s.revTrend.startsWith('+')?'▲':'▼'} ${s.revTrend} vs last period</div></div>
+    <div class="stat-card"><div class="glow" style="background:var(--cyan)"></div>
+      <div class="stat-label">New Orders</div><div class="stat-val">${s.orders}</div>
+      <div class="stat-trend ${s.ordTrend.startsWith('+')?'up':'down'}">${s.ordTrend.startsWith('+')?'▲':'▼'} ${s.ordTrend} vs last period</div></div>
+    <div class="stat-card"><div class="glow" style="background:var(--pink)"></div>
+      <div class="stat-label">Active Customers</div><div class="stat-val">${s.customers}</div>
+      <div class="stat-trend ${s.custTrend.startsWith('+')?'up':'down'}">${s.custTrend.startsWith('+')?'▲':'▼'} ${s.custTrend} vs last period</div></div>
+    <div class="stat-card"><div class="glow" style="background:#F0A93C"></div>
+      <div class="stat-label">Conversion Rate</div><div class="stat-val">${s.conv}</div>
+      <div class="stat-trend ${s.convTrend.startsWith('+')?'up':'down'}">${s.convTrend.startsWith('+')?'▲':'▼'} ${s.convTrend} vs last period</div></div>
+  `;
+}
+
+function renderCharts(range){
+  const d = dataByRange[range];
+  if(revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(document.getElementById('revenueChart'), {
+    type: 'line',
+    data: { labels: d.labels, datasets: [
+      { label:'Revenue', data:d.revenue, borderColor:'#8B5CF6', backgroundColor:'rgba(139,92,246,.15)', tension:.4, fill:true, pointRadius:0 },
+      { label:'Orders', data:d.orders, borderColor:'#3DD9D6', backgroundColor:'rgba(61,217,214,.1)', tension:.4, fill:true, pointRadius:0, yAxisID:'y1' }
+    ]},
+    options: { plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#1F2230'}, ticks:{callback:v=>'$'+v/1000+'k'}}, y1:{display:false} } }
+  });
+}
+
+document.getElementById('rangeRow').addEventListener('click', e=>{
+  if(!e.target.classList.contains('range-chip')) return;
+  document.querySelectorAll('.range-chip').forEach(c=>c.classList.remove('active'));
+  e.target.classList.add('active');
+  currentRange = parseInt(e.target.dataset.range);
+  document.getElementById('periodLabel').textContent = `Here's how your store performed over the last ${currentRange} days.`;
+  renderStats(currentRange);
+  renderCharts(currentRange);
 });
 
-new Chart(document.getElementById('categoryChart'), {
+categoryChart = new Chart(document.getElementById('categoryChart'), {
   type: 'doughnut',
-  data: {
-    labels: ['Electronics','Apparel','Home Goods','Beauty'],
-    datasets: [{ data:[38,27,21,14], backgroundColor:['#8B5CF6','#3DD9D6','#F26CA7','#F0A93C'], borderWidth:0 }]
-  },
-  options: {
-    cutout:'68%',
-    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:8, boxHeight:8, padding:16, font:{size:11} } } }
-  }
+  data: { labels: ['Electronics','Apparel','Home Goods','Beauty'], datasets: [{ data:[38,27,21,14], backgroundColor:['#8B5CF6','#3DD9D6','#F26CA7','#F0A93C'], borderWidth:0 }] },
+  options: { cutout:'68%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:8, boxHeight:8, padding:16, font:{size:11} } } } }
 });
 
-const orders = [
-  {name:"Ayesha Raza", init:"AR", id:"#ORD-8821", product:"Wireless Headphones", amount:"$89.00", status:"paid"},
-  {name:"Hamza Sheikh", init:"HS", id:"#ORD-8822", product:"Running Shoes", amount:"$64.50", status:"pending"},
-  {name:"Noor Fatima", init:"NF", id:"#ORD-8823", product:"Smart Watch", amount:"$129.00", status:"paid"},
-  {name:"Bilal Khan", init:"BK", id:"#ORD-8824", product:"Backpack", amount:"$45.00", status:"paid"},
-  {name:"Sara Ahmed", init:"SA", id:"#ORD-8825", product:"Desk Organizer", amount:"$22.30", status:"pending"},
+let orders = [
+  {name:"Ayesha Raza", init:"AR", id:"#ORD-8821", product:"Wireless Headphones", amountVal:89.00, status:"paid"},
+  {name:"Hamza Sheikh", init:"HS", id:"#ORD-8822", product:"Running Shoes", amountVal:64.50, status:"pending"},
+  {name:"Noor Fatima", init:"NF", id:"#ORD-8823", product:"Smart Watch", amountVal:129.00, status:"paid"},
+  {name:"Bilal Khan", init:"BK", id:"#ORD-8824", product:"Backpack", amountVal:45.00, status:"paid"},
+  {name:"Sara Ahmed", init:"SA", id:"#ORD-8825", product:"Desk Organizer", amountVal:22.30, status:"pending"},
+  {name:"Imran Aziz", init:"IA", id:"#ORD-8826", product:"Bluetooth Speaker", amountVal:34.50, status:"paid"},
+  {name:"Zainab Tariq", init:"ZT", id:"#ORD-8827", product:"Yoga Mat", amountVal:19.00, status:"pending"},
 ];
-document.getElementById('orderBody').innerHTML = orders.map(o=>`
-  <tr>
-    <td><div class="user-cell"><div class="avatar">${o.init}</div>${o.name}</div></td>
-    <td>${o.id}</td>
-    <td>${o.product}</td>
-    <td>${o.amount}</td>
-    <td><span class="badge ${o.status==='paid'?'b-paid':'b-pending'}">${o.status==='paid'?'Paid':'Pending'}</span></td>
-  </tr>
-`).join('');
+let sortKey = null, sortAsc = true;
+
+function renderOrders(){
+  const search = document.getElementById('orderSearch').value.toLowerCase();
+  let list = orders.filter(o => o.name.toLowerCase().includes(search));
+  if(sortKey){
+    list.sort((a,b)=>{
+      if(a[sortKey] < b[sortKey]) return sortAsc ? -1 : 1;
+      if(a[sortKey] > b[sortKey]) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+  document.getElementById('orderBody').innerHTML = list.map(o=>`
+    <tr>
+      <td><div class="user-cell"><div class="avatar">${o.init}</div>${o.name}</div></td>
+      <td>${o.id}</td>
+      <td>${o.product}</td>
+      <td>$${o.amountVal.toFixed(2)}</td>
+      <td><span class="badge ${o.status==='paid'?'b-paid':'b-pending'}">${o.status==='paid'?'Paid':'Pending'}</span></td>
+    </tr>
+  `).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">No orders found.</td></tr>`;
+}
+
+function sortBy(key){
+  if(sortKey===key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = true; }
+  renderOrders();
+}
+
+document.getElementById('orderSearch').addEventListener('input', renderOrders);
+
+function exportCSV(){
+  const headers = ['Customer','Order ID','Product','Amount','Status'];
+  const rows = orders.map(o => [o.name, o.id, o.product, o.amountVal.toFixed(2), o.status]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'pulse-orders-export.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+renderStats(30);
+renderCharts(30);
+renderOrders();
 </script>
 </body>
 </html>
